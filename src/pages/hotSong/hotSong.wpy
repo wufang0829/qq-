@@ -1,0 +1,207 @@
+<template>
+	<view id="hotSong">
+		<view class="searchHeader">
+			<view class="searchInput">
+				<icon type="search" class="iconSearch" size="20"></icon>
+				<input type="text" class="keyWords" name="" placeholder="搜索歌单、歌曲、专辑" value="{{inputKeywords}}" @input="getinputKeywords">
+			</view>
+			<view type="button" class="searchBtn" @tap="searchSong">搜索</view>
+		</view>
+		<view class="mysongList">
+			<scroll-view scroll-y="true" bindscrolltolower="searchScrollLower" class="scrollView">
+				<view class="songInfo" wx:for="{{songList}}" data-songinfo="{{item}}" wx:key="unique" @tap="playSong">
+					<image class="musicImg" src="../../images/icon-music.png"></image>
+					<view class="songTitle">
+						<view class="songname">{{item.songname}}</view>
+						<view class="search_singer">
+							<text wx:for="{{item.singer}}" wx:key="unique" class="singername">
+								{{item.name}}
+							</text>
+						</view>
+					</view>
+				</view>
+		    </scroll-view>
+		</view>
+		<view class="loading" wx:if="{{songList.length<=0}}">
+			<image src="../../images/loadding.gif" class="loadingImg"></image>
+			<view>正在加载数据...</view>
+		</view>
+		
+	</view>
+</template>
+<script>
+	import wepy from 'wepy'
+	import api from '../../api/api.js'
+	export default class hotSong extends wepy.page{
+		data={
+			searchSongInfo:[],
+			inputKeywords:'',
+			pageNum:1,
+			songList:[]
+		}
+		methods={
+			getinputKeywords(e){
+				this.inputKeywords=e.detail.value
+			},
+			searchSong(){
+				let keyword=this.inputKeywords
+				let page=this.pageNum
+				var _this=this
+				api.getSearchMusic(keyword,page,function(data){
+					_this.$parent.globalData.searchSongData=keyword
+					_this.searchSongInfo=data
+					_this.songList=data.song.list
+				})
+			},
+			searchScrollLower(e){
+				console.log(666)
+				this.pageNum=this.pageNum+1
+				let keyword=this.inputKeywords
+				let page=this.pageNum
+				var _this=this
+				api.getSearchMusic(keyword,page,function(data){
+					//console.log(data)
+					_this.searchSongInfo=data
+				})
+			},
+			playSong(e){
+				var songdata=e.currentTarget.dataset.songinfo
+				this.$parent.globalData.songData=songdata
+				wepy.navigateTo({
+					url:'../playsong/playsong'
+				})
+			}
+		}
+		onLoad(){
+			this.searchSongInfo=this.$parent.globalData.searchSongData
+			this.inputKeywords=this.$parent.globalData.inputKeywords
+			this.songList=this.searchSongInfo.song.list
+			//console.log(this.songList)
+		}
+	}
+</script>
+<style lang="scss">
+	#hotSong{
+		position: absolute;
+		top:0;
+		left:0;
+		right: 0;
+		bottom: 0;
+
+		.searchHeader{
+			position: fixed;
+			top:0;
+			left:0;
+			width: 100%;
+			height:120rpx;
+			padding: 0 20rpx;
+			box-sizing:border-box;
+			background:#eee;
+			
+			z-index: 8;
+
+			.searchInput{
+				width:90%;
+				height:76rpx;
+				float: left; 
+				position: relative;
+				margin-top:30rpx;
+				.iconSearch{
+					position: absolute;
+					top:18rpx;
+					left:10rpx;
+					z-index: 6;
+					transform:scale(0.8)
+				}
+				.keyWords{
+					width: 100%;
+					height: 100%;
+					background:#fff;
+					font-size: 26rpx;
+					padding-left:60rpx;
+					box-sizing:border-box;
+					border-radius:10rpx;
+
+				}
+			}
+			.searchBtn{
+				width:10%;
+				height: 80rpx;
+				float: left;
+				text-align: right;
+				font-size:30rpx;
+				border:none;
+				background: transparent;
+				margin-top:40rpx;
+			}
+		}
+		.mysongList{
+			position: absolute;
+			top:120rpx;
+			left:0;
+			right: 0;
+			bottom: 0;
+			background:#fff;
+			flex:auto;
+			.scrollView{
+				position: absolute;
+				bottom: 0;
+				left:0;
+				right: 0;
+				top:0;
+				width: 100%;
+				.songInfo{
+					width: 100%;
+					height:120rpx;
+					border-bottom: 1px solid rgba(0,0,0,0.2);
+					padding:0rpx 30rpx;
+					box-sizing:border-box;
+					.musicImg{
+						width:40rpx;
+						height: 40rpx;
+						float: left;
+						margin-top:40rpx;
+						margin-right:30rpx;
+					}
+					.songTitle{
+						width:90%;
+						height: 120rpx;
+						float: left;
+					
+						.songname{
+							width:90%;
+							height:50rpx;
+							line-height:74rpx;
+							font-size: 34rpx;
+						}
+						.search_singer{
+							width:100%;
+							height: 60rpx;
+							line-height:18rpx;
+							font-size:28rpx;
+							color:#9e9e9e;
+							.singername{
+								display: inline-block;
+							}
+
+						}
+					}
+				}
+			}
+			
+		}
+		.loading{
+			position: absolute;
+			top:50%;
+			left:40%;
+			text-align: center;
+			font-size:28rpx;
+			.loadingImg{
+				width: 60rpx;
+				height: 60rpx;
+				
+			}
+		}
+		
+	}
+</style>

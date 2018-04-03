@@ -1,0 +1,71 @@
+<style lang="less">
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+</style>
+
+<script>
+import wepy from 'wepy'
+export default class extends wepy.app {
+  config = {
+    pages: [
+      'pages/index/index',
+      'pages/toplist/toplist',
+      'pages/playsong/playsong',
+      'pages/logs/logs',
+      'pages/hotSong/hotSong'
+    ],
+    window: {
+      backgroundTextStyle: 'light',
+      navigationBarBackgroundColor: '#31c27c',
+      navigationBarTitleText: 'QQ音乐',
+      navigationBarTextStyle: '#fff'
+    }
+  }
+
+  globalData = {
+    userInfo: null,
+    topListId:null,
+    songData:{},
+    searchSongData:[],
+    inputKeywords:''
+
+  }
+
+  // constructor () {
+  //   super()
+  //   this.use('requestfix')
+  // }
+
+  onLaunch() {//获取缓存数据
+    var logs=wepy.getStorageSync('logs')||[]
+    logs.unshift(Date.now())
+    wepy.setStorageSync('logs',logs)
+  }
+
+ 
+
+  getUserInfo(cb) {
+    const that = this
+    if (this.globalData.userInfo) {
+      return this.globalData.userInfo
+    }
+    wepy.login({
+      success:function(){
+           wepy.getUserInfo({
+          success (res) {
+              that.globalData.userInfo = res.userInfo
+              cb && cb(res.userInfo)
+            }
+          })
+      }
+    })
+   
+  }
+}
+</script>

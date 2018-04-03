@@ -1,0 +1,236 @@
+<template>
+	<view id="playsong">
+		<view class="playHeader">
+			<image src="{{songImg}}" class="headerImg"></image>
+			<view class="play_songName">
+				<view class="playsong">{{songDetails.songname}}</view>
+				<text wx:for="{{songDetails.singer}}" wx:key="unique" class="paly_singer">{{item.name}}</text>
+			</view>
+			<image src="../../images/{{isplay?'icon-pause.png':'icon-play.png'}}" class="palyBtn" @tap="palysongToggle"></image>
+		</view>
+		<view class="playCenter">
+			<image src="{{songImg}}" class="centerImg {{isplay?'rotateImg':''}}"></image>
+			<view class="progress">
+				<view class="totalLine"></view>
+				<view class="playlingLine" style="width:{{songState.progress}}%;"></view>
+				<view class="totalTime">{{songState.duration}}</view>
+				<view class="playingTime" style="left:{{songState.progress}}%">{{songState.currentPosition}}</view>
+			</view>
+		</view>
+		<view class="playMask" style="background:url({{songImg}}) no-repeat;background-position: center;background-size: cover;filter:blur(30rpx)"></view>
+	</view>
+</template>
+<script >
+	import wepy from 'wepy'
+	export default class playsong extends wepy.page{
+		data={
+			songDetails:{},
+			songUrl:'',
+			songImg:'',
+			isplay:true,
+			songState:{
+				progress:0,
+				currentPosition:'00:00',
+				duration:'00:00'
+			}
+		}
+		methods={
+			palysongToggle(){
+
+				let _this=this
+				_this.songPlay()
+				if(_this.isplay===true){
+					_this.isplay=false
+					wepy.pauseBackgroundAudio()
+				}else{
+					_this.isplay=true
+					wepy.playBackgroundAudio({
+						
+						title:_this.songDetails.songname,
+						coverImgUrl:_this.songDetails.songImg,
+						success:function(res){
+
+						}
+					})
+				}
+				
+			}
+
+		}
+		
+		timeToString(duration){//处理歌曲播放时间函数
+			let minute=parseInt(duration/60)<10?('0'+parseInt(duration/60)):(parseInt(duration/60))
+			let second=duration%60<10?('0'+duration%60):(duration%60)
+			let str=minute+':'+second
+			return str
+		}
+		songPlay(){
+			let that = this;
+			let inv = setInterval(function(){
+				wepy.getBackgroundAudioPlayerState({
+					success: function(res){
+
+						if(res.status == 1){
+							// console.log(res)
+							that.setData({
+								isplay: true,
+								songState: {
+									progress: res.currentPosition/res.duration*100,
+									currentPosition: that.timeToString(res.currentPosition),
+									duration: that.timeToString(res.duration)
+								}
+							})
+
+						}else{
+							that.setData({
+								isplay: false
+							});
+							clearInterval(inv);
+						}
+					}
+				});
+			}, 1000)
+		}
+
+		onLoad(){
+			let _this=this
+			let songData=this.$parent.globalData.songData
+			//console.log(songData)
+			this.songDetails=songData
+			this.songUrl='http://ws.stream.qqmusic.qq.com/C100' + songData.songmid + '.m4a?fromtag=38',
+			this.songImg='http://y.gtimg.cn/music/photo_new/T002R150x150M000' + songData.albummid + '.jpg',
+			//console.log(this.songDetails)
+			//使用后台播放器播放音乐，对于微信客户端来说，只能同时有一个后台音乐在播放。当用户离开小程序后，音乐将暂停播放；当用户点击“显示在聊天顶部”时，音乐不会暂停播放；当用户在其他小程序占用了音乐播放器，原有小程序内的音乐将停止播放。
+			wepy.playBackgroundAudio({
+				dataUrl:_this.songUrl,
+				title:songData.songname,
+				coverImgUrl:_this.songImg,
+				success:function(res){
+
+				}
+			})
+		}
+		onReady(){
+			let _this=this
+			_this.songPlay();
+			wx.onBackgroundAudioPlay(function(){
+				_this.songPlay();
+				
+			})
+		}
+	}
+</script>
+<style lang="scss">
+	#playsong{
+		position: fixed;
+		top:0;
+		left:0;
+		bottom: 0;
+		right:0;
+		width: 100%;
+		.playHeader{
+			width: 100%;
+			height: 200rpx;
+			background-color: rgba(0,0,0,0.1);
+			position: absolute;
+			top:0;
+			left:0;
+			z-index: 6;
+			.headerImg{
+				width: 130rpx;
+				height: 130rpx;
+				float: left;
+				margin-top: 30rpx;
+				margin-left: 30rpx;
+			}
+			.play_songName{
+				float: left;
+				color:#fff;
+				margin-left:30rpx;
+				margin-top: 50rpx;
+				.playsong{
+					font-size: 37rpx;
+				}
+				.paly_singer{
+					font-size:28rpx;
+				}
+			}
+			.palyBtn{
+				float: right;
+				width: 80rpx;
+				height: 80rpx;
+				margin-right:20rpx;
+				margin-top:50rpx;
+			}
+		}
+		.playCenter{
+			text-align: center;
+			position:absolute;
+			top:200rpx;
+			left:0;
+			z-index: 7;
+			margin-top: 160rpx;
+
+			.centerImg{
+				width: 300rpx;
+				height: 300rpx;
+				margin-left:180rpx;
+				margin-bottom: 60rpx;
+				border-radius: 50%;
+				
+			}
+			.rotateImg{
+				animation: rotate 10s linear infinite;
+			}
+			.progress{
+				width:500rpx;
+				margin-left:110rpx;
+				position: relative;
+				font-size: 24rpx;
+				color:#fff;
+
+				.totalLine{
+					width:100%;
+					height:7rpx;
+					background: #eee;
+					border-radius: 4rpx;
+					position:relative;
+					
+				}
+				.playlingLine{
+					position: absolute;
+					top:0;
+					left:0;
+					height:7rpx;
+					border-radius: 4rpx;
+					background:#31c27c;
+				}
+				.totalTime{
+					position: absolute;
+					right:-60rpx;
+					top:-10rpx;
+				}
+				.playingTime{
+					position: absolute;
+					bottom:6rpx;
+				}
+			}
+		}
+		.playMask{
+			position: absolute;
+			top:0;
+			left: 0;
+			right:0;
+			bottom: 0;
+			// background: rgba(0,0,0,0.8);
+		}
+		@keyframes rotate{
+			0%{
+				transform:rotate(0deg)
+			}
+			100%{
+				transform:rotate(360deg)
+			}
+		}
+	}
+</style>

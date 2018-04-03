@@ -1,0 +1,165 @@
+<template>
+	<view id="topList">
+		<view class="picTitle">
+			<image src="{{topinfo.pic_album}}" class="headerImg"></image>
+			<view class="listName">{{topinfo.ListName}}</view>
+			<text class="updateTime">{{toplistDetails.update_time}}更新</text>
+			<view class="mask"></view>
+		</view>
+		<!-- 歌列表 -->
+		<view class="songList" style="background-color:{{bgColor}}">
+			<view class="songInfo" wx:for="{{songlist}}" wx:key="unique" @tap="listenSong" data-songdata="{{item.data}}">
+				<view class="songInfo_left">
+					{{index+1}}
+				</view>
+				<view class="songInfo_right">
+					<view class="toplist_songName">{{item.data.songname}}</view>
+					<view class="singer_alumname">
+					
+						<text wx:for="{{item.data.singer}}" wx:key="unique" class="singer">
+							{{item.name}}
+						</text>
+						<text>.{{item.data.albumname}}</text>
+					</view>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+<script >
+	import api from '../../api/api.js'
+	import wepy from 'wepy'
+	export default class toplist extends wepy.page{
+		data={
+			toplistDetails:[],
+			songlist:[],
+			topinfo:{},
+			bgColor:'',
+			singerList:[]
+		};
+		methods={
+
+			dealColor(rgb){
+				if(!rgb){
+					return
+				}
+				let r=(rgb&0x00ff0000)>>16
+				let g=(rgb&0x0000ff00)>>8
+				let b=(rgb&0x000000ff)
+				return 'rgb('+r+','+g+','+b+')'
+			},
+			listenSong(e){
+				this.$parent.globalData.songData=e.currentTarget.dataset.songdata
+				wepy.navigateTo({
+					url:'../playsong/playsong'
+				})
+			}
+		}
+		onLoad(){
+			var _this=this
+			let id=this.$parent.globalData.topListId
+			//console.log(_this)
+			api.getToplisDetails(id,function(data){
+				console.log(data)
+				// _this.data.toplistDetails=data
+				// _this.data.songlist=data.songlist
+				// _this.data.topinfo=data.topinfo
+				// _this.data.bgColor=_this.methods.dealColor(data.color)
+				// data.songlist.forEach(function(item,index){
+
+				// })
+				_this.setData({
+					toplistDetails:data,
+					songlist:data.songlist,
+					topinfo:data.topinfo,
+					bgColor:_this.methods.dealColor(data.color)
+				})
+			})
+			
+		}
+	}
+</script>
+<style lang="scss">
+	#topList{
+		.picTitle{
+			position: relative;
+			.headerImg{
+				width: 100%;
+				height:600rpx;
+				display: block;
+			}
+			.mask{
+				position: absolute;
+				top:0;
+				left: 0;
+				bottom: 0;
+				right: 0;
+				background:linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+
+				
+			}
+			.listName{
+				color:#fff;
+				font-size: 45rpx;
+				position:absolute;
+				bottom:60rpx;
+				left:20rpx;
+				font-weight: bold;
+				z-index:6;
+			}
+			.updateTime{
+				color:#fff;
+				font-size: 26rpx;
+				position:absolute;
+				bottom:20rpx;
+				left:20rpx;
+				z-index:6;
+			}
+		}
+		.songList{
+			width: 100%;
+			height: auto;
+			.songInfo{
+				width: 100%;
+				height: 110rpx;
+				.songInfo_left{
+					width:10%;
+					height: 110rpx;
+					float: left;
+					color:#fff;
+					text-align: center;
+					line-height: 80rpx;
+					font-size: 35rpx;
+				}
+				.songInfo_right{
+					width:90%;
+					height: 110rpx;
+					float: left;
+					border-bottom:1px solid rgba(255,255,255,.15);
+					.toplist_songName{
+						width: 100%;
+						height: 55rpx;
+						font-size:36rpx;
+						color: #fff;
+						margin-top:10rpx;
+					}
+					.singer_alumname{
+						width: 96%;
+						height:45rpx;
+						font-size: 28rpx;
+						color:rgba(255,255,255,.6);
+						overflow: hidden;
+						text-overflow:ellipsis;
+						white-space: nowrap;
+						line-height:10rpx;
+						.singer{
+							display:inline-block;
+							// width: 10%;
+							// float:left;
+						}
+					}
+				}
+			}
+		}
+	}
+</style>
